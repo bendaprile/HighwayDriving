@@ -57,7 +57,7 @@ int main() {
   		  int lane = 1;
   
   		  // set a reference velocity to target
-  		  double ref_vel = 49.5; //mph
+  		  double ref_vel = 0; //mph
 
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy,&lane]
@@ -129,6 +129,14 @@ int main() {
                   too_close = true;
                 }
               }
+          }
+          
+          if(too_close) {
+            ref_vel -= .224;
+          }
+          else if(ref_vel < 49.5)
+          {
+            ref_vel += .224;
           }
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
@@ -231,13 +239,6 @@ int main() {
           // fill up our rest of path planner after filling with the previous points, here we will always output the 50 points.
           // Previous path here will be a collection of the remaining points that the car did not actually get to during its last path
           for (int i=1;i<=50-previous_path_x.size();i++) {
-            
-//             ref_vel += speed_adj;
-//               if ( ref_vel > MAX_SPEED ) {
-//                 ref_vel = MAX_SPEED;
-//               } else if ( ref_vel < MAX_ACC ) {
-//                 ref_vel = MAX_ACC;
-//               }
             
             // Calculates distance between each point in the spline to keep us going near the target speed
             double N = (target_dist/(0.02*ref_vel/2.24));
