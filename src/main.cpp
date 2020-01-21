@@ -53,11 +53,16 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
   
-                          //start in lane 1 (lane 0 = left lane, lane 1 = middle lane, lane 2 = right lane
-  		  int lane = 1;
+  //start in lane 1 (lane 0 = left lane, lane 1 = middle lane, lane 2 = right lane
+  int lane = 1;
   
-  		  // set a reference velocity to target
-  		  double ref_vel = 0; //mph
+  // set a reference velocity to target
+  double ref_vel = 0;//mph
+  
+  // set a constant maximum speed that we do not want the car to exceed
+  const double MAX_SPEED = 49.5; //mph
+  
+  
 
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy,&lane]
@@ -105,15 +110,17 @@ int main() {
             car_s = end_path_s;
           }
           
-          bool too_close = false;
+          // Define booleans to represent whether there are cars in certain locations
+          bool car_ahead = false;
+          bool car_left = false;
+          bool car_right = false;
           
           //find ref_vel to use
           //loop over all the cars in our sensor fusion vector
           for(int i = 0; i < sensor_fusion.size(); i++) {
-            //car is in my lane
-            float d = sensor_fusion[i][0];
-              
-              //lanes are 4m wide this calculation will tell us if the lane is in our lane
+
+            //lanes are 4m wide this calculation will tell us if the car is in our lane
+            float d = sensor_fusion[i][6]; 
             if(d < (2+4*lane+2) && d > (2+4*lane-2)) {
                 double vx = sensor_fusion[i][3];
                 double vy = sensor_fusion[i][4];
@@ -124,9 +131,11 @@ int main() {
                 
                 //check s values greater than mine and s gap in the future. Is our car closing in on another car
                 if((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
-                  //Do some logic here, lower reference velocity so we don't crash into the car infront of us, could also flag to try to change lanes
-                  //ref_vel = 29.5;//mph
+                        
                   too_close = true;
+                  if(lane > 0) {
+                    lane = 0;
+                  }
                 }
               }
           }
