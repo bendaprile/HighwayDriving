@@ -60,9 +60,11 @@ int main() {
   double ref_vel = 0;//mph
   
   // set a constant maximum speed that we do not want the car to exceed
-  const double MAX_SPEED = 49.5; //mph
+  const double MAX_SPEED = 49.5; //mph  
   
-  
+  const int LEFT_LANE = 0;
+  const int CENTER_LANE = 1;
+  const int RIGHT_LANE = 2;
 
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy,&lane]
@@ -105,13 +107,15 @@ int main() {
           // last path that the car was following (usually 50)
           int prev_size = previous_path_x.size();
           
+          double inc_vel = 0.5;
+          
           // If we have some prev points then we set the end of the previous path (s) to the start of our current path (s)
           if (prev_size > 0) {
             car_s = end_path_s;
           }
-          
-          // Define booleans to represent whether there are cars in certain locations
-          bool car_ahead = false;
+         
+          // declare booleans to track whether there are cars in the lanes around us
+          bool too_close = false;
           bool car_left = false;
           bool car_right = false;
           
@@ -121,6 +125,19 @@ int main() {
 
             //lanes are 4m wide this calculation will tell us if the car is in our lane
             float d = sensor_fusion[i][6]; 
+            
+            int other_car_lane;
+            if (d >= 0 && d < 4) {
+              other_car_lane = LEFT_LANE;
+            } else if (d >= 4 && d < 8) {
+              other_car_lane = CENTER_LANE;
+            } else if (d >= 8 && d < 12) {
+              other_car_lane = RIGHT_LANE;
+            } else { 
+              continue;
+            }
+
+            
             if(d < (2+4*lane+2) && d > (2+4*lane-2)) {
                 double vx = sensor_fusion[i][3];
                 double vy = sensor_fusion[i][4];
@@ -128,23 +145,21 @@ int main() {
                 double check_car_s = sensor_fusion[i][5]; //grab s value of car, how close it is to us
                 
                 check_car_s += ((double)prev_size * .02 * check_speed); // if using previous points can project s value outward in time
+              
                 
                 //check s values greater than mine and s gap in the future. Is our car closing in on another car
-                if((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {
-                        
+                if((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {                        
                   too_close = true;
-                  if(lane > 0) {
-                    lane = 0;
-                  }
+                } else {
+                  too_close = false;
                 }
               }
           }
           
-          if(too_close) {
-            ref_vel -= .224;
+          if(!too_close) {
+            ref_vel += inc_vel;
           }
-          else if(ref_vel < 49.5)
-          {
+          else if(too_close) {
             ref_vel += .224;
           }
           
