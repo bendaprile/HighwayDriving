@@ -58,13 +58,6 @@ int main() {
   
   // set a reference velocity to target
   double ref_vel = 0;//mph
-  
-  // set a constant maximum speed that we do not want the car to exceed
-  const double MAX_SPEED = 49.5; //mph  
-  
-  const int LEFT_LANE = 0;
-  const int CENTER_LANE = 1;
-  const int RIGHT_LANE = 2;
 
   h.onMessage([&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy,&lane]
@@ -100,14 +93,27 @@ int main() {
           double end_path_s = j[1]["end_path_s"];
           double end_path_d = j[1]["end_path_d"];
 
-          // Sensor Fusion Data, a list of all other cars on the same side 
-          //   of the road.
+          // Sensor Fusion Data, a list of all other cars on the same side of the road.
           auto sensor_fusion = j[1]["sensor_fusion"]; 
+          
+            // set a constant maximum speed that we do not want the car to exceed
+  			const double MAX_SPEED = 49.5; //mph  
+  
+  			const int LEFT_LANE = 0;
+  			const int CENTER_LANE = 1;
+  			const int RIGHT_LANE = 2;
      
           // last path that the car was following (usually 50)
           int prev_size = previous_path_x.size();
           
-          double inc_vel = 0.5;
+          // value to increment the velocity by when accelerating and decelerating
+          double inc_vel = 0.5;//mph
+          
+          // Space to leave between our car and the car in front of us
+          double safe_space = 30.0;
+          
+          // Space to leave between cars when deciding whether to change lanes
+          double lane_change_space = 20.0;
           
           // If we have some prev points then we set the end of the previous path (s) to the start of our current path (s)
           if (prev_size > 0) {
@@ -115,17 +121,18 @@ int main() {
           }
          
           // declare booleans to track whether there are cars in the lanes around us
-          bool too_close = false;
+          bool car_ahead = false;
           bool car_left = false;
           bool car_right = false;
           
-          //find ref_vel to use
-          //loop over all the cars in our sensor fusion vector
+          // loop over all the cars in our sensor fusion vector
+          // determine where the cars are around us
           for(int i = 0; i < sensor_fusion.size(); i++) {
 
-            //lanes are 4m wide this calculation will tell us if the car is in our lane
+            // lanes are 4m wide this calculation will tell us if the car is in our lane
             float d = sensor_fusion[i][6]; 
             
+            // figure out what lane the other car is in currently
             int other_car_lane;
             if (d >= 0 && d < 4) {
               other_car_lane = LEFT_LANE;
@@ -136,31 +143,53 @@ int main() {
             } else { 
               continue;
             }
-
             
-            if(d < (2+4*lane+2) && d > (2+4*lane-2)) {
-                double vx = sensor_fusion[i][3];
-                double vy = sensor_fusion[i][4];
-                double check_speed = sqrt(vx*vx+vy*vy); //helps to predict where car will be in the future
-                double check_car_s = sensor_fusion[i][5]; //grab s value of car, how close it is to us
-                
-                check_car_s += ((double)prev_size * .02 * check_speed); // if using previous points can project s value outward in time
+            //grab x, y, speed, and s location of the other car
+            double vx = sensor_fusion[i][3];
+            double vy = sensor_fusion[i][4];
+            double check_speed = sqrt(vx*vx+vy*vy); //helps to predict where car will be in the future
+            double check_car_s = sensor_fusion[i][5]; //grab s value of car, how close it is to us
+
+            // if we are using previous points this can project s value outward in time
+            check_car_s += ((double)prev_size * .02 * check_speed);
+
+            // if our car is in the same lane as the other car AND
+            // the other car is in front of our car AND
+            // the other car is within 30 meters
+            if ((lane == other_car_lane) && (check_car_s > car_s) && ((check_car_s - car_s) < safe_space)) {
+              car_ahead = true;
               
-                
-                //check s values greater than mine and s gap in the future. Is our car closing in on another car
-                if((check_car_s > car_s) && ((check_car_s - car_s) < 30)) {                        
-                  too_close = true;
-                } else {
-                  too_close = false;
-                }
+              // if the other car is in the lane to the right of us AND
+              // the other car is within 60 meters of ours in the other lane
+            } else if ((other_car_lane - lane == 1) 
+                       && ((car_s - safe_space) < check_car_s) && ((car_s + safe_space) > check_car_s)) {
+              car_right = true;
+              
+              // if the other car is in the lane to the left of us AND
+              // the other car is within 60 meters of ours in the other lane
+            } else if ((lane - other_car_lane == 1) 
+                       && ((car_s - lane_change_space) < check_car_s) && ((car_s + safe_space) > check_car_s)) {
+              car_left = true;
               }
-          }
+            }
+
           
-          if(!too_close) {
+          if(!car_ahead && (ref_vel < MAX_SPEED)) {
             ref_vel += inc_vel;
-          }
-          else if(too_close) {
-            ref_vel += .224;
+          } else if (car_ahead) {
+            
+            // LCL, if there is no car to the left and we are not in the left most lane
+            if (!car_left && lane != LEFT_LANE) {
+              lane--;
+                
+              // LCR if there is no car to the right and we are not in the right most lane
+            } else if (!car_right && lane != RIGHT_LANE) {
+              lane++;
+              
+              // decrease our speed if we are too close to the car and there is no available lane change
+            } else {
+              ref_vel -= inc_vel;  
+            }              
           }
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
