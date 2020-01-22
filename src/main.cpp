@@ -107,13 +107,14 @@ int main() {
           int prev_size = previous_path_x.size();
           
           // value to increment the velocity by when accelerating and decelerating
-          double inc_vel = 0.5;//mph
+          double inc_vel = 0.4;//mph
           
           // Space to leave between our car and the car in front of us
           double safe_space = 30.0;
+          double too_close = 15.0;
           
           // Space to leave between cars when deciding whether to change lanes
-          double lane_change_space = 20.0;
+          double lane_change_space = 15.0;
           
           // If we have some prev points then we set the end of the previous path (s) to the start of our current path (s)
           if (prev_size > 0) {
@@ -122,6 +123,7 @@ int main() {
          
           // declare booleans to track whether there are cars in the lanes around us
           bool car_ahead = false;
+          bool car_ahead_close = false;
           bool car_left = false;
           bool car_right = false;
           
@@ -159,6 +161,9 @@ int main() {
             if ((lane == other_car_lane) && (check_car_s > car_s) && ((check_car_s - car_s) < safe_space)) {
               car_ahead = true;
               
+              if ((check_car_s - car_s) < too_close) {
+                car_ahead_close = true;
+              }
               // if the other car is in the lane to the right of us AND
               // the other car is within 60 meters of ours in the other lane
             } else if ((other_car_lane - lane == 1) 
@@ -173,7 +178,7 @@ int main() {
               }
             }
 
-          
+          // Execute lane changes or velocity changes depending on the situation around the car
           if(!car_ahead && (ref_vel < MAX_SPEED)) {
             ref_vel += inc_vel;
           } else if (car_ahead) {
@@ -187,9 +192,11 @@ int main() {
               lane++;
               
               // decrease our speed if we are too close to the car and there is no available lane change
+            } else if (!car_ahead_close) {
+              ref_vel -= (inc_vel / 1.5);  
             } else {
-              ref_vel -= inc_vel;  
-            }              
+              ref_vel -= (inc_vel * 1.5);
+            }
           }
           
           // Create a list of widely spaced (x,y) waypoints, evenly spaced at 30m
