@@ -95,9 +95,17 @@ the path has processed since last time.
     
     c. I then go through some if statements checking what lane the car is in. If it is in the lane in front of us and within 30m of us  	then I set the car_ahead bool to true. If the car is in the lane to the right or left of us and within 30m ahead or 15m behind us   	then I set that repsective boolean to true. These will help us during the decision during lane and speed changes.
     
-2. Behavior Planning: This is the step where I take the variables set above and decide what the car should do. 
+2. Behavior Planning: This is the step where I decide what the car should do next with the given information.
 
-	a. 
+	a. I have a simplified if structure to decide what the car should do next. This could be added onto in addition to the prediction   	step to drive more efficiently.
+    
+    b. If there is no car ahead and we are still under the speed limit then the car will increase its speed else...
+    
+    c. If there is a car ahead then we will start to look for a lane change.
+    
+    d. If there is no car in the left lane then we will lane change left, else if there is no car in the right lane then we will lane   	change right. If there happens to be a car in both lanes then we will keep lane and reduce our speed to stay behind the car in 		front of us. The car will reduce speed more and more as it gets closer to the car in front.
+    
+3. 
     
     
     My model keeps track of whether 	there is a car in front of it, to the right of it, and to the left of it. Depending on these three booleans, it is able to decide 		what the most efficient route will be.

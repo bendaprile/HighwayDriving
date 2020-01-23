@@ -127,7 +127,6 @@ int main() {
          
           // declare booleans to track whether there are cars in the lanes around us
           bool car_ahead = false;
-          bool car_ahead_close = false;
           bool car_left = false;
           bool car_right = false;
           
@@ -158,6 +157,9 @@ int main() {
 
             // if we are using previous points this can project s value outward in time
             check_car_s += ((double)prev_size * .02 * check_speed);
+            
+            // the space between our car and the car in front of us
+            double space = check_car_s - car_s;
 
             // if our car is in the same lane as the other car AND
             // the other car is in front of our car AND
@@ -181,6 +183,10 @@ int main() {
               car_left = true;
               }
             }
+          
+          /*
+           * Behavior Planning: Decide what the car should do next with the given information
+          */
 
           // Execute lane changes or velocity changes depending on the situation around the car
           if(!car_ahead && (ref_vel < MAX_SPEED)) {
@@ -196,10 +202,8 @@ int main() {
               lane++;
               
               // decrease our speed if we are too close to the car and there is no available lane change
-            } else if (!car_ahead_close) {
-              ref_vel -= (inc_vel / 1.5);  
-            } else {
-              ref_vel -= (inc_vel * 1.5);
+            } else {              
+              ref_vel -= (inc_vel / (space / 3))
             }
           }
           
