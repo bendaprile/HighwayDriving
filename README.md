@@ -116,7 +116,3 @@ the path has processed since last time.
     d. Now we start to construct our spline using the spline library. We start by appending all of the previous points from the 		previous path to the spline. Then we calculate how to space the points along the spline to stay at our target speed and append our  	new generated points.
     
     e. Finally we convert our local coordinates back into global coordinates and send the points to the car to drive along.
-    
-    
-    My model keeps track of whether 	there is a car in front of it, to the right of it, and to the left of it. Depending on these three booleans, it is able to decide 		what the most efficient route will be.
-
