@@ -110,8 +110,8 @@ int main() {
           double inc_vel = 0.4;//mph
           
           // Space to leave between our car and the car in front of us
-          double safe_space = 30.0;
-          double too_close = 15.0;
+          double safe_space_front = 30.0;
+          double safe_space_side = 30.0;
           
           // Space to leave between cars when deciding whether to change lanes
           double lane_change_space = 15.0;
@@ -129,6 +129,9 @@ int main() {
           bool car_ahead = false;
           bool car_left = false;
           bool car_right = false;
+          
+          // keeps track of the space between our car and the car in front of us
+          double space = 0.0;
           
           // loop over all the cars in our sensor fusion vector
           // determine where the cars are around us
@@ -157,29 +160,24 @@ int main() {
 
             // if we are using previous points this can project s value outward in time
             check_car_s += ((double)prev_size * .02 * check_speed);
-            
-            // the space between our car and the car in front of us
-            double space = check_car_s - car_s;
 
             // if our car is in the same lane as the other car AND
             // the other car is in front of our car AND
             // the other car is within 30 meters
-            if ((lane == other_car_lane) && (check_car_s > car_s) && ((check_car_s - car_s) < safe_space)) {
+            if ((lane == other_car_lane) && (check_car_s > car_s) && ((check_car_s - car_s) < safe_space_front)) {
               car_ahead = true;
+              space = check_car_s - car_s;
               
-              if ((check_car_s - car_s) < too_close) {
-                car_ahead_close = true;
-              }
               // if the other car is in the lane to the right of us AND
               // the other car is within 60 meters of ours in the other lane
             } else if ((other_car_lane - lane == 1) 
-                       && ((car_s - safe_space) < check_car_s) && ((car_s + safe_space) > check_car_s)) {
+                       && ((car_s - lane_change_space) < check_car_s) && ((car_s + safe_space_side) > check_car_s)) {
               car_right = true;
               
               // if the other car is in the lane to the left of us AND
               // the other car is within 60 meters of ours in the other lane
             } else if ((lane - other_car_lane == 1) 
-                       && ((car_s - lane_change_space) < check_car_s) && ((car_s + safe_space) > check_car_s)) {
+                       && ((car_s - lane_change_space) < check_car_s) && ((car_s + safe_space_side) > check_car_s)) {
               car_left = true;
               }
             }
@@ -203,7 +201,7 @@ int main() {
               
               // decrease our speed if we are too close to the car and there is no available lane change
             } else {              
-              ref_vel -= (inc_vel / (space / 3))
+              ref_vel -= (inc_vel / (space / 11)); // higher means sharper increase in breaking the smaller the space gets
             }
           }
           
