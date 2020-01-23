@@ -120,6 +120,10 @@ int main() {
           if (prev_size > 0) {
             car_s = end_path_s;
           }
+          
+          /*
+           * Prediction - Where are there cars around us?
+          */
          
           // declare booleans to track whether there are cars in the lanes around us
           bool car_ahead = false;

@@ -87,5 +87,18 @@ the path has processed since last time.
 
 ## Model Documentation
 
-1. My model keeps track of whether there is a car in front of it, to the right of it, and to the left of it. Depending on these three booleans, it is able to decide what the most efficient route will be.
+1. Prediction: This is the first step of my path planner and it discovers the cars that are around it. 
+
+	a. First I loop through the cars in the sensor fusion vector and figure out which lane they are in. 
+    
+    b. I then grab the x, y, speed, and s location of each car. These variables will help us determine where the are and will be in the 	future.
+    
+    c. I then go through some if statements checking what lane the car is in. If it is in the lane in front of us and within 30m of us  	then I set the car_ahead bool to true. If the car is in the lane to the right or left of us and within 30m ahead or 15m behind us   	then I set that repsective boolean to true. These will help us during the decision during lane and speed changes.
+    
+2. Behavior Planning: This is the step where I take the variables set above and decide what the car should do. 
+
+	a. 
+    
+    
+    My model keeps track of whether 	there is a car in front of it, to the right of it, and to the left of it. Depending on these three booleans, it is able to decide 		what the most efficient route will be.
 
