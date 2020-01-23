@@ -105,7 +105,17 @@ the path has processed since last time.
     
     d. If there is no car in the left lane then we will lane change left, else if there is no car in the right lane then we will lane   	change right. If there happens to be a car in both lanes then we will keep lane and reduce our speed to stay behind the car in 		front of us. The car will reduce speed more and more as it gets closer to the car in front.
     
-3. 
+3. Trajectory Generation: This is the step where we actually generate trajectories for the car to follow.
+
+	a. Start by appending the previous points onto our new trajectory to continue our last trajectory. If there are less than two 		points then we just append them without worrying about which direction we were headed. If there were more than two points then we   	can assume which direction we were headed so we compute that.
+    
+    b. We then add evenly spaced points every 30m out so at 30m, 60m, and 90m from the starting reference points. This is done in 		Frenet.
+    
+    c. Then we shift the reference angle by 45 degrees so it seems that the car is facing 0 degrees or forward. This shifts the frame   	of reference for our car.
+    
+    d. Now we start to construct our spline using the spline library. We start by appending all of the previous points from the 		previous path to the spline. Then we calculate how to space the points along the spline to stay at our target speed and append our  	new generated points.
+    
+    e. Finally we convert our local coordinates back into global coordinates and send the points to the car to drive along.
     
     
     My model keeps track of whether 	there is a car in front of it, to the right of it, and to the left of it. Depending on these three booleans, it is able to decide 		what the most efficient route will be.
